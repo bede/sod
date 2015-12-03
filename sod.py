@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 
-# USAGE ./sod.py -n 10000 -l 250 -s 0.1 -i 0.05 -d 0.05 tests/hxb2.fasta > /dev/null
-# Simulates:
-# - Sequencing of a randomly mutated reference genome
-# - Single end reads of a defined length
-# - Substitutions, insertions and deletions at specified rates
-#     - Insertions and deletions of geometrically distributed length (p=0.5)
-#         - Insertions of random composition 
-# - Forward and reverse complement reads
+# Sample and mutate subsequences from a supplied reference nucleotide sequence
+# USAGE ./sod.py -n 10000 -l 250 -s 0.1 -i 0.05 -d 0.05 tests/hxb2.fasta > outfile.fa
+
+__author__ = 'Bede Constantinides'
+__license__ = 'MIT'
+__version__ = '1.0.0'
 
 import sys
 import argh
