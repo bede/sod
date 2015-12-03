@@ -4,7 +4,7 @@
 # USAGE ./sod.py -n 10000 -l 250 -s 0.1 -i 0.05 -d 0.05 tests/hxb2.fasta > outfile.fa
 
 __author__ = 'Bede Constantinides'
-__license__ = 'MIT'
+__license__ = 'GPL v3'
 __version__ = '1.0.0'
 
 import sys
