@@ -1,6 +1,6 @@
-# Simulator of Diversity.
+# Simulator of Diversity
 
- Generates subsequences of a specified length from a supplied reference sequence, applying base insertions, deletions and substitutions at specified rates
+ Simply generates subsequences of a specified length from a supplied reference sequence, applying base insertions, deletions and substitutions at specified rates
 
 Simulates:
 - Sequencing of a randomly mutated reference genome
@@ -22,6 +22,7 @@ Does not simulate:
 - Biopython (`pip install biopython`)
 
 ## Example
+```
 $ ./sod.py 
 usage: sod.py [-h] [-n N_READS] [-l LEN_READS] [-s SUB_RATE] [-i INS_RATE]
               [-d DEL_RATE]
@@ -32,3 +33,4 @@ CAGGAGCATGTACAGTTAGAGAAgATGAGTTTGCtgacaAGGAAGATGGAACCAAAAATG
 ATAGGGGgcGAATTGAGGTTTATCAAAAAGAGTTCAGATACTCAAGAAACGTGGACATAA
 gaAATAGGTACAGATTAcTAGGACCAACCTGTAAATAATTGGAAAAACTGTTGACTCAGA
 TTGTTGCACTgcTTAATTTCCATTAggcattGCCTAtgctTTGAGA
+```
