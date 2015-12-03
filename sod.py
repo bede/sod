@@ -68,7 +68,6 @@ def simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks):
 
     ref_i = start_pos
     read = ''
-    del_i = 0
     for insertion, deletion, substitution in zip(ins_mask, del_mask, sub_mask):
         base = rand_base_except(ref[ref_i]) if substitution else ref[ref_i]
         if insertion:
