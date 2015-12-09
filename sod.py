@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-# SoD: sample and mutate subsequences from a supplied reference nucleotide sequence
-# USAGE ./sod.py -n 10000 -l 250 -s 0.1 -i 0.05 -d 0.05 tests/hxb2.fasta > outfile.fa
-
+'''
+SoD: sample and mutate subsequences from a supplied reference nucleotide sequence
+USAGE ./sod.py -n 10000 -l 250 -s 0.1 -i 0.05 -d 0.05 tests/hxb2.fasta > outfile.fa
+'''
 __author__ = 'Bede Constantinides'
 __license__ = 'GPL v3'
-__version__ = '1.0.1'
+__version__ = '0.1.0'
 
 import sys
 import argh
@@ -62,8 +63,8 @@ def simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks):
     Returns SeqRecord of simulated sequence
     '''
     ins_mask, del_mask, sub_mask = ids_masks
-    start_pos = random.randint(0, ref_len-mut_read_len)
     direction = 'fwd' if random.getrandbits(1) else 'rev'
+    start_pos = random.randint(0, ref_len-mut_read_len)
     ref = str(ref_fwd) if direction == 'fwd' else str(ref_rev_cmp)
     ref_i = start_pos
     read = ''
@@ -77,7 +78,7 @@ def simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks):
             read += base
         ref_i += 1
     start_pos = start_pos if direction == 'fwd' else ref_len - start_pos
-    end_pos = start_pos + mut_read_len if direction == 'fwd' else start_pos - mut_read_len
+    end_pos = start_pos + mut_read_len
     read_header = direction + '_s' + str(start_pos) + '_e' + str(end_pos)
     record = SeqRecord(Seq(read, DNAAlphabet()), id=read_header, description='')
     return record
@@ -104,3 +105,34 @@ def main(path_to_ref, n_reads=1, len_reads=250, sub_rate=0.0, ins_rate=0.0, del_
 
 
 argh.dispatch_command(main)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
