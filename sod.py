@@ -80,8 +80,8 @@ def simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks, i):
         ref_i += 1
     start_pos = start_pos if direction else ref_len - start_pos
     end_pos = start_pos + mut_read_len
-    read_header = ('read' + str(i) + '_' + str(start_pos) + '_' + str(int(not direction)) + '_'
-    + str(ins_count) + '_' + str(del_count) + '_' + str(sub_count))
+    read_header = 'read{}_{}_{}_{}_{}_{}'.format(i, start_pos, int(not direction),
+                                                 ins_count, del_count, sub_count)
     record = SeqRecord(Seq(read, DNAAlphabet()), id=read_header, description='')
     return record
 
