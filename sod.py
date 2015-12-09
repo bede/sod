@@ -83,7 +83,7 @@ def simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks):
     return record
 
 
-def main(path_to_ref, n_reads=1, len_reads=250, sub_rate=0.0, ins_rate=0.0, del_rate=0.0):
+def main(path_to_ref, n_reads=1, len_reads=250, sub_rate=0.0, ins_rate=0.0, del_rate=0.0, fastq=False):
     ref_fwd = str(SeqIO.read(path_to_ref, 'fasta').seq)
     ref_rev_cmp = Seq(ref_fwd, DNAAlphabet()).reverse_complement()
     ref_len = len(ref_fwd)
@@ -92,10 +92,15 @@ def main(path_to_ref, n_reads=1, len_reads=250, sub_rate=0.0, ins_rate=0.0, del_
     for i in range(n_reads):
         ids_masks, mut_read_len = mutate(len_reads, sub_rate, ins_rate, del_rate)
         record = simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks)
-        assert len(record.seq) == len_reads
         records.append(record)
-        print('>' + record.id)
-        print(record.seq)
+        assert len(record.seq) == len_reads
+
+    if fastq:
+        for record in records:
+            record.letter_annotations['phred_quality'] = [30] * len(record)
+        SeqIO.write(records, sys.stdout, 'fastq')
+    else:
+        SeqIO.write(records, sys.stdout, 'fasta')
 
 
 argh.dispatch_command(main)
