@@ -58,14 +58,15 @@ def mutate(len_reads, sub_rate, ins_rate, del_rate):
     return (ins_mask, del_mask, sub_mask), mut_read_len
 
 
-def simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks):
+def simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks, i):
     '''
     Returns SeqRecord of simulated sequence
     '''
     ins_mask, del_mask, sub_mask = ids_masks
-    direction = 'fwd' if random.getrandbits(1) else 'rev'
+    ins_count, del_count, sub_count = (sum(map(bool, mask)) for mask in ids_masks)
+    direction = 1 if random.getrandbits(1) else 0
     start_pos = random.randint(0, ref_len-mut_read_len)
-    ref = str(ref_fwd) if direction == 'fwd' else str(ref_rev_cmp)
+    ref = str(ref_fwd) if direction else str(ref_rev_cmp)
     ref_i = start_pos
     read = ''
     for insertion, deletion, substitution in zip(ins_mask, del_mask, sub_mask):
@@ -77,9 +78,10 @@ def simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks):
         if not insertion:
             read += base
         ref_i += 1
-    start_pos = start_pos if direction == 'fwd' else ref_len - start_pos
+    start_pos = start_pos if direction else ref_len - start_pos
     end_pos = start_pos + mut_read_len
-    read_header = direction + '_s' + str(start_pos) + '_e' + str(end_pos)
+    read_header = ('read' + str(i) + '_' + str(start_pos) + '_' + str(int(not direction)) + '_'
+    + str(ins_count) + '_' + str(del_count) + '_' + str(sub_count))
     record = SeqRecord(Seq(read, DNAAlphabet()), id=read_header, description='')
     return record
 
@@ -92,7 +94,7 @@ def main(path_to_ref, n_reads=1, len_reads=250, sub_rate=0.0, ins_rate=0.0, del_
     records = []
     for i in range(n_reads):
         ids_masks, mut_read_len = mutate(len_reads, sub_rate, ins_rate, del_rate)
-        record = simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks)
+        record = simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks, i+1)
         records.append(record)
         assert len(record.seq) == len_reads
 
@@ -105,34 +107,3 @@ def main(path_to_ref, n_reads=1, len_reads=250, sub_rate=0.0, ins_rate=0.0, del_
 
 
 argh.dispatch_command(main)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
