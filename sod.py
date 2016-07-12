@@ -60,7 +60,7 @@ def mutate(len_reads, sub_rate, ins_rate, del_rate):
     return (ins_mask, del_mask, sub_mask), mut_read_len
 
 
-def simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks, i):
+def simulate_read(ref_f, ref_rc, ref_len, mut_read_len, ids_masks, i):
     '''
     Returns SeqRecord of simulated sequence
     '''
@@ -68,7 +68,7 @@ def simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks, i):
     ins_count, del_count, sub_count = (sum(map(bool, mask)) for mask in ids_masks)
     direction = 1 if random.getrandbits(1) else 0
     start_pos = random.randint(0, ref_len-mut_read_len)
-    ref = str(ref_fwd) if direction else str(ref_rev_cmp)
+    ref = str(ref_f) if direction else str(ref_rc)
     ref_i = start_pos
     read = ''
     for insertion, deletion, substitution in zip(ins_mask, del_mask, sub_mask):
@@ -88,23 +88,32 @@ def simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks, i):
     return record
 
 
-def simulate_reads(path_to_ref, n_reads=1, len_reads=250,
-         sub_rate=0.0, ins_rate=0.0, del_rate=0.0,
-         fastq=False, uppercase=False):
-    ref_fwd = str(SeqIO.read(path_to_ref, 'fasta').seq)
-    ref_rev_cmp = Seq(ref_fwd, DNAAlphabet()).reverse_complement()
-    ref_len = len(ref_fwd)
+def simulate_reads(path_to_ref, n_reads=1, len_reads=250, sub_rate=0.0, ins_rate=0.0,
+                   del_rate=0.0, fastq=False, uppercase=False):
+    '''
+    Returns list of SeqRecords of simulated sequences
+    '''
+    ref_f = str(SeqIO.read(path_to_ref, 'fasta').seq)
+    ref_rc = Seq(ref_f, DNAAlphabet()).reverse_complement()
+    ref_len = len(ref_f)
     
     records = []
-    for i in range(1, n_reads):
+    for i in range(n_reads):
         assert max(ins_rate, del_rate, sub_rate) <= 0.5
         ids_masks, mut_read_len = mutate(len_reads, sub_rate, ins_rate, del_rate)
-        record = simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks, i+1)
+        record = simulate_read(ref_f, ref_rc, ref_len, mut_read_len, ids_masks, i+1)
+        if fastq:
+            record.letter_annotations['phred_quality'] = [30] * len(record)
         if uppercase:
             record.seq = record.seq.upper()
         records.append(record)
-        assert len(record.seq) == len_reads
+    return records
 
+
+def main(path_to_ref, n_reads=1, len_reads=250, sub_rate=0.0, ins_rate=0.0,
+         del_rate=0.0, fastq=False, uppercase=False):
+    records = simulate_reads(path_to_ref, n_reads, len_reads, sub_rate,
+                             ins_rate, del_rate, fastq, uppercase)
     if fastq:
         for record in records:
             record.letter_annotations['phred_quality'] = [30] * len(record)
@@ -113,4 +122,4 @@ def simulate_reads(path_to_ref, n_reads=1, len_reads=250,
         SeqIO.write(records, sys.stdout, 'fasta')
 
 if __name__ == '__main__':
-    argh.dispatch_command(simulate_reads)
+    argh.dispatch_command(main)

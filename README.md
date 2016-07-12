@@ -23,7 +23,7 @@ Does not simulate:
 
 ## Example
 ```
-$ ./sod.py 
+$ ./sod.py -h
 usage: sod.py [-h] [-n N_READS] [-l LEN_READS] [-s SUB_RATE] [-i INS_RATE]
               [-d DEL_RATE] [-f] [-u]
               path-to-ref
