@@ -3,6 +3,8 @@
 '''
 SoD: sample and mutate subsequences from a supplied reference nucleotide sequence
 USAGE ./sod.py -n 10000 -l 250 -s 0.1 -i 0.05 -d 0.05 tests/hxb2.fasta > outfile.fa
+HELP sod.py -h
+
 '''
 __author__ = 'Bede Constantinides'
 __license__ = 'GPL v3'
@@ -80,21 +82,26 @@ def simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks, i):
         ref_i += 1
     start_pos = start_pos if direction else ref_len - start_pos
     end_pos = start_pos + mut_read_len
-    read_header = 'read{}_{}_{}_{}_{}_{}'.format(i, start_pos, int(not direction),
+    read_header = 'read{}_{}_{}_{}_{}_{}'.format(i, start_pos, int(direction),
                                                  ins_count, del_count, sub_count)
     record = SeqRecord(Seq(read, DNAAlphabet()), id=read_header, description='')
     return record
 
 
-def main(path_to_ref, n_reads=1, len_reads=250, sub_rate=0.0, ins_rate=0.0, del_rate=0.0, fastq=False):
+def simulate_reads(path_to_ref, n_reads=1, len_reads=250,
+         sub_rate=0.0, ins_rate=0.0, del_rate=0.0,
+         fastq=False, uppercase=False):
     ref_fwd = str(SeqIO.read(path_to_ref, 'fasta').seq)
     ref_rev_cmp = Seq(ref_fwd, DNAAlphabet()).reverse_complement()
     ref_len = len(ref_fwd)
     
     records = []
-    for i in range(n_reads):
+    for i in range(1, n_reads):
+        assert max(ins_rate, del_rate, sub_rate) <= 0.5
         ids_masks, mut_read_len = mutate(len_reads, sub_rate, ins_rate, del_rate)
         record = simulate(ref_fwd, ref_rev_cmp, ref_len, mut_read_len, ids_masks, i+1)
+        if uppercase:
+            record.seq = record.seq.upper()
         records.append(record)
         assert len(record.seq) == len_reads
 
@@ -105,5 +112,5 @@ def main(path_to_ref, n_reads=1, len_reads=250, sub_rate=0.0, ins_rate=0.0, del_
     else:
         SeqIO.write(records, sys.stdout, 'fasta')
 
-
-argh.dispatch_command(main)
+if __name__ == '__main__':
+    argh.dispatch_command(simulate_reads)
