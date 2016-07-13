@@ -21,8 +21,8 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import DNAAlphabet
 
 
-def rand_len():
-    return int(numpy.random.geometric(0.5, size=1)[0])
+def rand_len(indel_ext_rate):
+    return int(numpy.random.geometric(1-indel_ext_rate, size=1)[0])
 
 
 def rand_seq(len):
@@ -33,15 +33,15 @@ def rand_base_except(base):
     return random.choice('actg'.replace(base, ''))
 
 
-def mutate(len_reads, sub_rate, ins_rate, del_rate):
+def mutate(len_reads, sub_rate, ins_rate, del_rate, indel_ext_rate):
     '''
     Returns masks for each mutation type, as well as the required template length
     '''
     temp_i, read_i = 0, 0
     ins_mask, del_mask, sub_mask = [], [], []
     while read_i < len_reads:
-        insertion = rand_len() if random.random() < ins_rate else 0
-        deletion = rand_len() if random.random() < del_rate else 0
+        insertion = rand_len(indel_ext_rate) if random.random() < ins_rate else 0
+        deletion = rand_len(indel_ext_rate) if random.random() < del_rate else 0
         substitution = 1 if random.random() < sub_rate else 0
         if insertion:
             if read_i + insertion + 1 > len_reads:
@@ -56,18 +56,19 @@ def mutate(len_reads, sub_rate, ins_rate, del_rate):
         ins_mask.append(insertion)
         del_mask.append(deletion)
         sub_mask.append(substitution)
-    mut_read_len = temp_i
-    return (ins_mask, del_mask, sub_mask), mut_read_len
+    mut_len = temp_i
+    return (ins_mask, del_mask, sub_mask), mut_len
 
 
-def simulate_read(ref_f, ref_rc, ref_len, mut_read_len, ids_masks, i):
+def simulate_read(ref_f, ref_rc, ref_len, mut_len, ids_masks, i):
     '''
-    Returns SeqRecord of simulated sequence
+    Returns simulated SeqRecord
     '''
     ins_mask, del_mask, sub_mask = ids_masks
     ins_count, del_count, sub_count = (sum(map(bool, mask)) for mask in ids_masks)
     direction = 1 if random.getrandbits(1) else 0
-    start_pos = random.randint(0, ref_len-mut_read_len)
+    direction_fmt = 'f' if direction else 'r'
+    start_pos = random.randint(0, ref_len-mut_len)
     ref = str(ref_f) if direction else str(ref_rc)
     ref_i = start_pos
     read = ''
@@ -81,27 +82,27 @@ def simulate_read(ref_f, ref_rc, ref_len, mut_read_len, ids_masks, i):
             read += base
         ref_i += 1
     start_pos = start_pos if direction else ref_len - start_pos
-    end_pos = start_pos + mut_read_len
-    read_header = 'read{}_{}_{}_{}_{}_{}'.format(i, start_pos, int(direction),
-                                                 ins_count, del_count, sub_count)
+    end_pos = start_pos + mut_len
+    read_header = 'read{}_{}{}_s{}_i{}_d{}'.format(i, direction_fmt, start_pos,
+                                                 sub_count, ins_count, del_count)
     record = SeqRecord(Seq(read, DNAAlphabet()), id=read_header, description='')
     return record
 
 
 def simulate_reads(path_to_ref, n_reads=1, len_reads=250, sub_rate=0.0, ins_rate=0.0,
-                   del_rate=0.0, fastq=False, uppercase=False):
+                   del_rate=0.0, indel_ext_rate=0.5, fastq=False, uppercase=False,):
     '''
-    Returns list of SeqRecords of simulated sequences
+    Returns list of simulated SeqRecords
     '''
+    assert max(ins_rate, del_rate, sub_rate) <= 0.5
+
     ref_f = str(SeqIO.read(path_to_ref, 'fasta').seq)
     ref_rc = Seq(ref_f, DNAAlphabet()).reverse_complement()
-    ref_len = len(ref_f)
-    
+
     records = []
     for i in range(n_reads):
-        assert max(ins_rate, del_rate, sub_rate) <= 0.5
-        ids_masks, mut_read_len = mutate(len_reads, sub_rate, ins_rate, del_rate)
-        record = simulate_read(ref_f, ref_rc, ref_len, mut_read_len, ids_masks, i+1)
+        ids_masks, mut_len = mutate(len_reads, sub_rate, ins_rate, del_rate, indel_ext_rate)
+        record = simulate_read(ref_f, ref_rc, len(ref_f), mut_len, ids_masks, i+1)
         if fastq:
             record.letter_annotations['phred_quality'] = [30] * len(record)
         if uppercase:
@@ -110,10 +111,10 @@ def simulate_reads(path_to_ref, n_reads=1, len_reads=250, sub_rate=0.0, ins_rate
     return records
 
 
-def main(path_to_ref, n_reads=1, len_reads=250, sub_rate=0.0, ins_rate=0.0,
-         del_rate=0.0, fastq=False, uppercase=False):
+def main(path_to_ref, n_reads=1, len_reads=250, sub_rate=0.0, ins_rate=0.0, del_rate=0.0,
+         indel_ext_rate=0.5, fastq=False, uppercase=False):
     records = simulate_reads(path_to_ref, n_reads, len_reads, sub_rate,
-                             ins_rate, del_rate, fastq, uppercase)
+                             ins_rate, del_rate, indel_ext_rate, fastq, uppercase)
     if fastq:
         for record in records:
             record.letter_annotations['phred_quality'] = [30] * len(record)
